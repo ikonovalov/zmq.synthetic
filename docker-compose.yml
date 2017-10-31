@@ -1,0 +1,27 @@
+version: '2.1'
+
+services:
+
+  provider:
+    image: azul/zulu-openjdk:8
+    volumes:
+      - "./target/:/var/run/zmqsynth/:ro"
+      - "/usr/local/lib:/usr/local/lib:ro"
+      - "/tmp/zmq/:/tmp/zmq"
+    environment:
+      - PROVIDER_LISTEN_ADDR=tcp://*:5599
+    command: java -Djava.library.path=/usr/local/lib -cp /var/run/zmqsynth/zmq.synthetic-1.0.0.jar ru.codeunited.zmq.synth.reqresp.ServiceProvider
+
+  consumer:
+      image: azul/zulu-openjdk:8
+      volumes:
+        - "./target/:/var/run/zmqsynth/:ro"
+        - "/usr/local/lib:/usr/local/lib:ro"
+        - "/tmp/zmq/:/tmp/zmq"
+      depends_on:
+        - provider
+      environment:
+        - CONSUMER_CONNECT_ADDR=tcp://provider:5599
+        - MSG_SIZE=10240
+        - MSG_COUNT=100000
+      command: java -Djava.library.path=/usr/local/lib -cp /var/run/zmqsynth/zmq.synthetic-1.0.0.jar ru.codeunited.zmq.synth.reqresp.ServiceConsumer
